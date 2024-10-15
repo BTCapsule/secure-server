@@ -11,19 +11,13 @@ const readline = require('readline');
 
 const app = express();
 
-// Middleware
+
 app.use(cookieParser());
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
-
-
-
-
-
 
 
 
@@ -160,7 +154,7 @@ function updateSecretFile(oldSecretHash, oldEncryptHash, newSecretHash, newEncry
         return true;
       }
     } catch (error) {
-     // console.error(`Error processing file ${file}:`, error);
+     // Silently continue to the next file
     }
   }
   console.error('No matching secret file found to update');
@@ -191,7 +185,7 @@ async function checkHashAndPin(secretHash, encryptHash) {
 
 async function checkSessionAuth(req, res, next) {
 	
-		  	const previousUrl = req.get('Referer');
+	  const previousUrl = req.get('Referer');
       res.cookie('redirect_after_pin', previousUrl, { secure: true, sameSite: 'lax', maxAge: 30000000 });
 	  
 	  
@@ -228,15 +222,6 @@ async function checkSessionAuth(req, res, next) {
 
 
 
-/*
-
-app.get('/auth-success', (req, res) => {
-  res.redirect('/');
-});
-*/
-
-
-
 app.get('/createpin', (req, res) => {
   res.sendFile(path.join(__dirname, 'createpin.html'));
 });
@@ -256,7 +241,7 @@ app.post('/create-pin', express.json(), (req, res) => {
   res.cookie('encrypt', newEncryptHash, { secure: true, sameSite: 'lax', maxAge: 36000000000 });
 
 
-  res.sendStatus(200); // Change this line
+  res.sendStatus(200);
 });
 
 
@@ -281,7 +266,7 @@ app.post('/verify-pin', express.json(), (req, res) => {
     res.cookie('session_auth', 'true', { secure: true, sameSite: 'lax', maxAge: 3600000 });
     
     // Get the stored redirect URL
-    const redirectUrl = '/';//req.cookies.redirect_after_pin || '/';
+    const redirectUrl = req.cookies.redirect_after_pin || '/';
    
     // Clear the redirect cookie
     res.clearCookie('redirect_after_pin');
@@ -289,7 +274,7 @@ app.post('/verify-pin', express.json(), (req, res) => {
     return res.json({ success: true, redirectUrl });
       }
     } catch (error) {
-     // console.error('Error verifying PIN:', error);
+     // Silently continue to the next file
     }
   }
 
@@ -324,52 +309,13 @@ app.get('/', checkSessionAuth, (req, res) => {
           }
         }
       } catch (error) {
-       // console.error('Error processing file:', error);
+       // Silently continue to the next file
       }
     }
   }
 
   res.redirect('/main');
 });
-
-
-/*
-app.get('/uploads', checkSessionAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'uploads', 'uploads.html'));
-});
-
-
-app.get('/uploads/:filename', checkSessionAuth, (req, res) => {
-  const filename = req.params.filename;
-  res.sendFile(path.join(__dirname, 'uploads', filename));
-});
-
-app.use('/uploads', (req, res, next) => {
-  if (req.path.match(/\.(jpeg|jpg|gif|png)$/i)) {
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-  }
-  next();
-});
-
-
-app.get('/api/files', checkSessionAuth, (req, res) => {
-  fs.readdir(path.join(__dirname, 'uploads'), (err, files) => {
-    if (err) {
-      res.status(500).json({ error: 'Unable to read directory' });
-    } else {
-      res.json(files.filter(file => file !== 'uploads.html'));
-    }
-  });
-});
-
-*/
-
-
-
-
-
-
-// Middleware for access control
 
 
 
@@ -407,48 +353,10 @@ app.use(async (req, res, next) => {
 
 
 
-
-
-
 // Routes
 app.get('/main', (req, res) => {
   res.sendFile(path.join(__dirname, 'main.html'));
 });
-
-
-
-
-
-/*
-
-app.get('/', (req, res) => {
-  const clientSecretHash = req.cookies.secret;
-  const clientEncryptHash = req.cookies.encrypt;
-
-  if (clientSecretHash && clientEncryptHash) {
-    const files = getSecretFiles();
-    for (const file of files) {
-      try {
-        const encryptedContent = fs.readFileSync(file, 'utf8');
-        const decryptedContent = decryptData(encryptedContent, clientEncryptHash);
-        const [storedHash, pin] = decryptedContent.split('\n');
-        if (storedHash === clientSecretHash) {
-          return res.sendFile(path.join(__dirname, 'main.html'));
-        }
-      } catch (error) {
-        console.error('Error processing file:', error);
-      }
-    }
-  }
-
-  res.redirect('/main');
-});
-
-*/
-
-
-
-
 
 
 
@@ -485,7 +393,7 @@ function start() {
     });
 }
 
-// At the end of secureserver.js
+
 module.exports = {
   start,
   app,
@@ -497,6 +405,8 @@ module.exports = {
   updateSecretFile,
   checkSessionAuth
 };
+
+
 
 
 
